@@ -1,7 +1,7 @@
 var app = angular.module('sentinelDashboardApp');
 
 app.controller('GatewayIdentityCtl', ['$scope', '$stateParams', 'IdentityService',
-  'ngDialog', 'GatewayFlowService', 'GatewayApiService', 'DegradeService', 'MachineService',
+  'ngDialog', 'GatewayFlowServiceV2', 'GatewayApiServiceV2', 'DegradeServiceV2', 'MachineService',
   '$interval', '$location', '$timeout',
   function ($scope, $stateParams, IdentityService, ngDialog,
     GatewayFlowService, GatewayApiService, DegradeService, MachineService, $interval, $location, $timeout) {
@@ -34,12 +34,7 @@ app.controller('GatewayIdentityCtl', ['$scope', '$stateParams', 'IdentityService
 
     getApiNames();
     function getApiNames() {
-      if (!$scope.macInputModel) {
-        return;
-      }
-
-      var mac = $scope.macInputModel.split(':');
-      GatewayApiService.queryApis($scope.app, mac[0], mac[1]).success(
+      GatewayApiService.queryApis($scope.app).success(
         function (data) {
           if (data.code == 0 && data.data) {
             $scope.apiNames = [];
@@ -54,10 +49,6 @@ app.controller('GatewayIdentityCtl', ['$scope', '$stateParams', 'IdentityService
     var gatewayFlowRuleDialog;
     var gatewayFlowRuleDialogScope;
     $scope.addNewGatewayFlowRule = function (resource) {
-      if (!$scope.macInputModel) {
-        return;
-      }
-      var mac = $scope.macInputModel.split(':');
       gatewayFlowRuleDialogScope = $scope.$new(true);
 
       gatewayFlowRuleDialogScope.apiNames = $scope.apiNames;
@@ -67,8 +58,6 @@ app.controller('GatewayIdentityCtl', ['$scope', '$stateParams', 'IdentityService
       gatewayFlowRuleDialogScope.currentRule = {
         grade: 1,
         app: $scope.app,
-        ip: mac[0],
-        port: mac[1],
         resourceMode: gatewayFlowRuleDialogScope.apiNames.indexOf(resource) == -1 ? 0 : 1,
         resource: resource,
         interval: 1,
@@ -137,7 +126,7 @@ app.controller('GatewayIdentityCtl', ['$scope', '$stateParams', 'IdentityService
       GatewayFlowService.newRule(gatewayFlowRuleDialogScope.currentRule).success(function (data) {
         if (data.code === 0) {
           gatewayFlowRuleDialog.close();
-          let url = '/dashboard/gateway/flow/' + $scope.app;
+          let url = '/dashboard/v2/gateway/flow/' + $scope.app;
           $location.path(url);
         } else {
           alert('失败!');
@@ -162,10 +151,6 @@ app.controller('GatewayIdentityCtl', ['$scope', '$stateParams', 'IdentityService
 
     var degradeRuleDialog;
     $scope.addNewDegradeRule = function (resource) {
-      if (!$scope.macInputModel) {
-        return;
-      }
-      var mac = $scope.macInputModel.split(':');
       degradeRuleDialogScope = $scope.$new(true);
       degradeRuleDialogScope.currentRule = {
         enable: false,
@@ -173,9 +158,7 @@ app.controller('GatewayIdentityCtl', ['$scope', '$stateParams', 'IdentityService
         strategy: 0,
         resource: resource,
         limitApp: 'default',
-        app: $scope.app,
-        ip: mac[0],
-        port: mac[1]
+        app: $scope.app
       };
 
       degradeRuleDialogScope.degradeRuleDialog = {
@@ -202,7 +185,7 @@ app.controller('GatewayIdentityCtl', ['$scope', '$stateParams', 'IdentityService
       DegradeService.newRule(degradeRuleDialogScope.currentRule).success(function (data) {
         if (data.code == 0) {
           degradeRuleDialog.close();
-          var url = '/dashboard/degrade/' + $scope.app;
+          var url = '/dashboard/v2/degrade/' + $scope.app;
           $location.path(url);
         } else {
           alert('失败!');

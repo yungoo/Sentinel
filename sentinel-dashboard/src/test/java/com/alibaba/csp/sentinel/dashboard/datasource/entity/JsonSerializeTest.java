@@ -33,26 +33,24 @@ public class JsonSerializeTest {
     @Test
     public void authorityRuleJsonSerializeTest() {
         AuthorityRuleEntity emptyRule = new AuthorityRuleEntity();
-        Assert.assertTrue("{}".equals(JSON.toJSONString(emptyRule)));
+        Assert.assertTrue("{\"strategy\":0}".equals(JSON.toJSONString(emptyRule)));
 
-        AuthorityRuleEntity authorityRule = new AuthorityRuleEntity();
         AuthorityRule rule = new AuthorityRule();
         rule.setStrategy(0).setLimitApp("default").setResource("rs");
-        authorityRule.setRule(rule);
-        Assert.assertTrue("{\"rule\":{\"limitApp\":\"default\",\"resource\":\"rs\",\"strategy\":0}}".equals(JSON.toJSONString(authorityRule)));
+        AuthorityRuleEntity authorityRule = new AuthorityRuleEntity(rule);
+        Assert.assertTrue("{\"limitApp\":\"default\",\"resource\":\"rs\",\"strategy\":0}".equals(JSON.toJSONString(authorityRule)));
     }
 
     @Test
     public void paramFlowRuleSerializeTest() {
         ParamFlowRuleEntity emptyRule = new ParamFlowRuleEntity();
-        Assert.assertTrue("{}".equals(JSON.toJSONString(emptyRule)));
+        Assert.assertTrue("{\"burstCount\":0,\"clusterMode\":false,\"controlBehavior\":0,\"count\":0.0,\"durationInSec\":1,\"grade\":1,\"maxQueueingTimeMs\":0,\"paramFlowItemList\":[]}".equals(JSON.toJSONString(emptyRule)));
 
-        ParamFlowRuleEntity paramFlowRule = new ParamFlowRuleEntity();
         ParamFlowRule rule = new ParamFlowRule();
         rule.setClusterConfig(new ParamFlowClusterConfig());
         rule.setResource("rs").setLimitApp("default");
-        paramFlowRule.setRule(rule);
-        Assert.assertTrue("{\"rule\":{\"burstCount\":0,\"clusterConfig\":{\"fallbackToLocalWhenFail\":false,\"sampleCount\":10,\"thresholdType\":0,\"windowIntervalMs\":1000},\"clusterMode\":false,\"controlBehavior\":0,\"count\":0.0,\"durationInSec\":1,\"grade\":1,\"limitApp\":\"default\",\"maxQueueingTimeMs\":0,\"paramFlowItemList\":[],\"resource\":\"rs\"}}"
+        ParamFlowRuleEntity paramFlowRule = new ParamFlowRuleEntity(rule);
+        Assert.assertTrue("{\"burstCount\":0,\"clusterConfig\":{\"fallbackToLocalWhenFail\":false,\"sampleCount\":10,\"thresholdType\":0,\"windowIntervalMs\":1000},\"clusterMode\":false,\"controlBehavior\":0,\"count\":0.0,\"durationInSec\":1,\"grade\":1,\"limitApp\":\"default\",\"maxQueueingTimeMs\":0,\"paramFlowItemList\":[],\"resource\":\"rs\"}"
                 .equals(JSON.toJSONString(paramFlowRule)));
 
     }

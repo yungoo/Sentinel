@@ -98,6 +98,13 @@
             <artifactId>fastjson</artifactId>
         </dependency>
 
+        <!-- for Consul rule pubblisher sampler -->
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-datasource-consul</artifactId>
+            <version>1.8.0-SNAPSHOT</version>
+        </dependency>
+
         <!-- for Nacos rule publisher sample -->
         <dependency>
             <groupId>com.alibaba.csp</groupId>
@@ -136,6 +143,7 @@
         	<version>1.16.1</version>
         	<scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>

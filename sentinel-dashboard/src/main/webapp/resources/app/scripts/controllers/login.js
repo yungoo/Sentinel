@@ -7,6 +7,9 @@ app.controller('LoginCtl', ['$scope', '$state', '$window', 'AuthService',
       $state.go('dashboard');
     }
 
+    $scope.username = "sentinel"
+    $scope.password = "sentinel"
+
     $scope.login = function () {
       if (!$scope.username) {
         alert('请输入用户名');

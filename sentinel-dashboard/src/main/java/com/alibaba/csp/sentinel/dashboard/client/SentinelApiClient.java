@@ -593,7 +593,7 @@ public class SentinelApiClient {
         }
         try {
             String data = JSON.toJSONString(
-                rules.stream().map(ParamFlowRuleEntity::getRule).collect(Collectors.toList())
+                rules.stream().map(ParamFlowRuleEntity::toRule).collect(Collectors.toList())
             );
             Map<String, String> params = new HashMap<>(1);
             params.put("data", data);

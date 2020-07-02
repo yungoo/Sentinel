@@ -1,7 +1,7 @@
 /**
  * Authority rule controller.
  */
-angular.module('sentinelDashboardApp').controller('AuthorityRuleController', ['$scope', '$stateParams', 'AuthorityRuleService', 'ngDialog',
+angular.module('sentinelDashboardApp').controller('AuthorityRuleControllerV2', ['$scope', '$stateParams', 'AuthorityRuleServiceV2', 'ngDialog',
     'MachineService',
     function ($scope, $stateParams, AuthorityRuleService, ngDialog,
               MachineService) {
@@ -13,27 +13,9 @@ angular.module('sentinelDashboardApp').controller('AuthorityRuleController', ['$
             totalPage: 1,
             totalCount: 0,
         };
-        $scope.macsInputConfig = {
-            searchField: ['text', 'value'],
-            persist: true,
-            create: false,
-            maxItems: 1,
-            render: {
-                item: function (data, escape) {
-                    return '<div>' + escape(data.text) + '</div>';
-                }
-            },
-            onChange: function (value, oldValue) {
-                $scope.macInputModel = value;
-            }
-        };
 
         function getMachineRules() {
-            if (!$scope.macInputModel) {
-                return;
-            }
-            let mac = $scope.macInputModel.split(':');
-            AuthorityRuleService.queryMachineRules($scope.app, mac[0], mac[1])
+            AuthorityRuleService.queryMachineRules($scope.app)
                 .success(function (data) {
                     if (data.code === 0 && data.data) {
                         $scope.loadError = undefined;
@@ -70,11 +52,8 @@ angular.module('sentinelDashboardApp').controller('AuthorityRuleController', ['$
         };
 
         $scope.addNewRule = function () {
-            var mac = $scope.macInputModel.split(':');
             $scope.currentRule = {
                 app: $scope.app,
-                ip: mac[0],
-                port: mac[1],
                 strategy: 0,
                 limitApp: '',
             };
@@ -170,8 +149,8 @@ angular.module('sentinelDashboardApp').controller('AuthorityRuleController', ['$
                 title: '删除授权规则',
                 type: 'delete_rule',
                 attentionTitle: '请确认是否删除如下授权限流规则',
-                attention: '资源名: ' + ruleEntity.rule.resource + ', 流控应用: ' + ruleEntity.rule.limitApp +
-                    ', 类型: ' + (ruleEntity.rule.strategy === 0 ? '白名单' : '黑名单'),
+                attention: '资源名: ' + ruleEntity.resource + ', 流控应用: ' + ruleEntity.limitApp +
+                    ', 类型: ' + (ruleEntity.strategy === 0 ? '白名单' : '黑名单'),
                 confirmBtnText: '删除',
             };
             confirmDialog = ngDialog.open({
@@ -188,38 +167,4 @@ angular.module('sentinelDashboardApp').controller('AuthorityRuleController', ['$
                 console.error('error');
             }
         };
-
-        queryAppMachines();
-
-        function queryAppMachines() {
-            MachineService.getAppMachines($scope.app).success(
-                function (data) {
-                    if (data.code == 0) {
-                        // $scope.machines = data.data;
-                        if (data.data) {
-                            $scope.machines = [];
-                            $scope.macsInputOptions = [];
-                            data.data.forEach(function (item) {
-                                if (item.healthy) {
-                                    $scope.macsInputOptions.push({
-                                        text: item.ip + ':' + item.port,
-                                        value: item.ip + ':' + item.port
-                                    });
-                                }
-                            });
-                        }
-                        if ($scope.macsInputOptions.length > 0) {
-                            $scope.macInputModel = $scope.macsInputOptions[0].value;
-                        }
-                    } else {
-                        $scope.macsInputOptions = [];
-                    }
-                }
-            );
-        };
-        $scope.$watch('macInputModel', function () {
-            if ($scope.macInputModel) {
-                getMachineRules();
-            }
-        });
     }]);

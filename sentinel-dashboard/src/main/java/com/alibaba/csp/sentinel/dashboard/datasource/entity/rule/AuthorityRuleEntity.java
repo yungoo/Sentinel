@@ -15,23 +15,56 @@
  */
 package com.alibaba.csp.sentinel.dashboard.datasource.entity.rule;
 
+import com.alibaba.csp.sentinel.slots.block.Rule;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
 import com.alibaba.csp.sentinel.slots.block.authority.AuthorityRule;
 import com.alibaba.csp.sentinel.util.AssertUtil;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.Date;
+
 /**
  * @author Eric Zhao
  * @since 0.2.1
  */
-public class AuthorityRuleEntity extends AbstractRuleEntity<AuthorityRule> {
+public class AuthorityRuleEntity implements RuleEntity {
+
+    protected Long id;
+
+    protected String app;
+    protected String ip;
+    protected Integer port;
+
+    /**
+     * Resource name.
+     */
+    private String resource;
+
+    /**
+     * <p>
+     * Application name that will be limited by origin.
+     * The default limitApp is {@code default}, which means allowing all origin apps.
+     * </p>
+     * <p>
+     * For authority rules, multiple origin name can be separated with comma (',').
+     * </p>
+     */
+    private String limitApp;
+
+    private int strategy = RuleConstant.AUTHORITY_WHITE;
+
+    private Date gmtCreate;
+    private Date gmtModified;
 
     public AuthorityRuleEntity() {
     }
 
     public AuthorityRuleEntity(AuthorityRule authorityRule) {
         AssertUtil.notNull(authorityRule, "Authority rule should not be null");
-        this.rule = authorityRule;
+        this.resource = authorityRule.getResource();
+        this.limitApp = authorityRule.getLimitApp();
+        this.strategy = authorityRule.getStrategy();
     }
 
     public static AuthorityRuleEntity fromAuthorityRule(String app, String ip, Integer port, AuthorityRule rule) {
@@ -42,21 +75,98 @@ public class AuthorityRuleEntity extends AbstractRuleEntity<AuthorityRule> {
         return entity;
     }
 
-    @JsonIgnore
-    @JSONField(serialize = false)
+    @Override
+    public Long getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    @Override
+    public String getApp() {
+        return app;
+    }
+
+    public AuthorityRuleEntity setApp(String app) {
+        this.app = app;
+        return this;
+    }
+
+    @Override
+    public String getIp() {
+        return ip;
+    }
+
+    public AuthorityRuleEntity setIp(String ip) {
+        this.ip = ip;
+        return this;
+    }
+
+    @Override
+    public Integer getPort() {
+        return port;
+    }
+
+    public AuthorityRuleEntity setPort(Integer port) {
+        this.port = port;
+        return this;
+    }
+
+    @Override
+    public Date getGmtCreate() {
+        return gmtCreate;
+    }
+
+    public AuthorityRuleEntity setGmtCreate(Date gmtCreate) {
+        this.gmtCreate = gmtCreate;
+        return this;
+    }
+
+    public Date getGmtModified() {
+        return gmtModified;
+    }
+
+    public AuthorityRuleEntity setGmtModified(Date gmtModified) {
+        this.gmtModified = gmtModified;
+        return this;
+    }
+
     public String getLimitApp() {
-        return rule.getLimitApp();
+        return limitApp;
     }
 
-    @JsonIgnore
-    @JSONField(serialize = false)
     public String getResource() {
-        return rule.getResource();
+        return resource;
     }
 
-    @JsonIgnore
-    @JSONField(serialize = false)
     public int getStrategy() {
-        return rule.getStrategy();
+        return strategy;
+    }
+
+    public AuthorityRuleEntity setResource(String resource) {
+        this.resource = resource;
+        return this;
+    }
+
+    public AuthorityRuleEntity setLimitApp(String limitApp) {
+        this.limitApp = limitApp;
+        return this;
+    }
+
+    public AuthorityRuleEntity setStrategy(int strategy) {
+        this.strategy = strategy;
+        return this;
+    }
+
+    @Override
+    public Rule toRule() {
+        AuthorityRule rule = new AuthorityRule();
+        rule.setResource(resource);
+        rule.setLimitApp(limitApp);
+        rule.setStrategy(strategy);
+        return rule;
     }
 }

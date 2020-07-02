@@ -1,7 +1,7 @@
 var app = angular.module('sentinelDashboardApp');
 
 app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
-  'ngDialog', 'FlowServiceV1', 'DegradeService', 'AuthorityRuleService', 'ParamFlowService', 'MachineService',
+  'ngDialog', 'FlowServiceV2', 'DegradeServiceV2', 'AuthorityRuleServiceV2', 'ParamFlowServiceV2', 'MachineService',
   '$interval', '$location', '$timeout',
   function ($scope, $stateParams, IdentityService, ngDialog,
     FlowService, DegradeService, AuthorityRuleService, ParamFlowService, MachineService, $interval, $location, $timeout) {
@@ -95,7 +95,7 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
       FlowService.newRule(flowRuleDialogScope.currentRule).success(function (data) {
         if (data.code === 0) {
           flowRuleDialog.close();
-          let url = '/dashboard/flow/' + $scope.app;
+          let url = '/dashboard/v2/flow/' + $scope.app;
           $location.path(url);
         } else {
           alert('失败：' + data.msg);
@@ -161,7 +161,7 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
       DegradeService.newRule(degradeRuleDialogScope.currentRule).success(function (data) {
         if (data.code === 0) {
           degradeRuleDialog.close();
-          var url = '/dashboard/degrade/' + $scope.app;
+          var url = '/dashboard/v2/degrade/' + $scope.app;
           $location.path(url);
         } else {
           alert('失败：' + data.msg);
@@ -187,13 +187,13 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
 
       function saveAuthorityRule() {
           let ruleEntity = authorityRuleDialogScope.currentRule;
-          if (!AuthorityRuleService.checkRuleValid(ruleEntity.rule)) {
+          if (!AuthorityRuleService.checkRuleValid(ruleEntity)) {
               return;
           }
           AuthorityRuleService.addNewRule(ruleEntity).success((data) => {
               if (data.success) {
                   authorityRuleDialog.close();
-                  let url = '/dashboard/authority/' + $scope.app;
+                  let url = '/dashboard/v2/authority/' + $scope.app;
                   $location.path(url);
               } else {
                   alert('添加规则失败：' + data.msg);
@@ -209,7 +209,7 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
 
       function saveAuthorityRuleAndContinue() {
           let ruleEntity = authorityRuleDialogScope.currentRule;
-          if (!AuthorityRuleService.checkRuleValid(ruleEntity.rule)) {
+          if (!AuthorityRuleService.checkRuleValid(ruleEntity)) {
               return;
           }
           AuthorityRuleService.addNewRule(ruleEntity).success((data) => {
@@ -237,11 +237,9 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
               app: $scope.app,
               ip: mac[0],
               port: mac[1],
-              rule: {
-                  resource: resource,
-                  strategy: 0,
-                  limitApp: '',
-              }
+              resource: resource,
+              strategy: 0,
+              limitApp: '',
           };
 
           authorityRuleDialogScope.authorityRuleDialog = {
@@ -266,13 +264,13 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
 
       function saveParamFlowRule() {
           let ruleEntity = paramFlowRuleDialogScope.currentRule;
-          if (!ParamFlowService.checkRuleValid(ruleEntity.rule)) {
+          if (!ParamFlowService.checkRuleValid(ruleEntity)) {
               return;
           }
           ParamFlowService.addNewRule(ruleEntity).success((data) => {
               if (data.success) {
                   paramFlowRuleDialog.close();
-                  let url = '/dashboard/paramFlow/' + $scope.app;
+                  let url = '/dashboard/v2/paramFlow/' + $scope.app;
                   $location.path(url);
               } else {
                   alert('添加热点规则失败：' + data.msg);
@@ -288,7 +286,7 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
 
       function saveParamFlowRuleAndContinue() {
           let ruleEntity = paramFlowRuleDialogScope.currentRule;
-          if (!ParamFlowService.checkRuleValid(ruleEntity.rule)) {
+          if (!ParamFlowService.checkRuleValid(ruleEntity)) {
               return;
           }
           ParamFlowService.addNewRule(ruleEntity).success((data) => {
@@ -316,21 +314,20 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
               app: $scope.app,
               ip: mac[0],
               port: mac[1],
-              rule: {
-                  resource: resource,
-                  grade: 1,
-                  paramFlowItemList: [],
-                  count: 0,
-                  limitApp: 'default',
-                  controlBehavior: 0,
-                  durationInSec: 1,
-                  burstCount: 0,
-                  maxQueueingTimeMs: 0,
-                  clusterMode: false,
-                  clusterConfig: {
-                      thresholdType: 0,
-                      fallbackToLocalWhenFail: true,
-                  }
+
+              resource: resource,
+              grade: 1,
+              paramFlowItemList: [],
+              count: 0,
+              limitApp: 'default',
+              controlBehavior: 0,
+              durationInSec: 1,
+              burstCount: 0,
+              maxQueueingTimeMs: 0,
+              clusterMode: false,
+              clusterConfig: {
+                  thresholdType: 0,
+                  fallbackToLocalWhenFail: true,
               }
           };
 

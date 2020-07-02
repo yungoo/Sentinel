@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: spring-cloud-gateway
+  cloud:
+    consul:
+      enabled: ${CONFIG_SERVICE_ENABLED:false}
+      host: ${CONFIG_SERVICE_HOST:localhost}
+      port: ${CONFIG_SERVICE_PORT:8500}
+      discovery:
+        prefer-ip-address: true
+        enabled: ${CONFIG_SERVICE_ENABLED:false}
+        health-check-path: /mgm/health
+      config:
+        format: yaml
+        enabled: ${CONFIG_SERVICE_ENABLED:false}

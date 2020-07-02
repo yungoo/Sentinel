@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.csp.sentinel.dashboard.controller.gateway;
+package com.alibaba.csp.sentinel.dashboard.controller.v2;
 
 import com.alibaba.csp.sentinel.dashboard.auth.AuthAction;
 import com.alibaba.csp.sentinel.dashboard.auth.AuthService;
-import com.alibaba.csp.sentinel.dashboard.client.SentinelApiClient;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.gateway.ApiDefinitionEntity;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.gateway.ApiPredicateItemEntity;
-import com.alibaba.csp.sentinel.dashboard.discovery.MachineInfo;
 import com.alibaba.csp.sentinel.dashboard.domain.Result;
 import com.alibaba.csp.sentinel.dashboard.domain.vo.gateway.api.AddApiReqVo;
 import com.alibaba.csp.sentinel.dashboard.domain.vo.gateway.api.ApiPredicateItemVo;
 import com.alibaba.csp.sentinel.dashboard.domain.vo.gateway.api.UpdateApiReqVo;
 import com.alibaba.csp.sentinel.dashboard.repository.gateway.InMemApiDefinitionStore;
+import com.alibaba.csp.sentinel.dashboard.rule.DynamicRuleProvider;
+import com.alibaba.csp.sentinel.dashboard.rule.DynamicRulePublisher;
 import com.alibaba.csp.sentinel.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,33 +46,37 @@ import static com.alibaba.csp.sentinel.adapter.gateway.common.SentinelGatewayCon
  * @since 1.7.0
  */
 @RestController
-@RequestMapping(value = "/gateway/api")
-public class GatewayApiController {
+@RequestMapping(value = "/v2/gateway/api")
+public class GatewayApiControllerV2 {
 
-    private final Logger logger = LoggerFactory.getLogger(GatewayApiController.class);
+    private final Logger logger = LoggerFactory.getLogger(GatewayApiControllerV2.class);
 
     @Autowired
     private InMemApiDefinitionStore repository;
 
     @Autowired
-    private SentinelApiClient sentinelApiClient;
+    @Qualifier("apiDefinitionConsulProvider")
+    private DynamicRuleProvider<List<ApiDefinitionEntity>> ruleProvider;
+    @Autowired
+    @Qualifier("apiDefinitionConsulPublisher")
+    private DynamicRulePublisher<List<ApiDefinitionEntity>> rulePublisher;
 
     @GetMapping("/list.json")
     @AuthAction(AuthService.PrivilegeType.READ_RULE)
-    public Result<List<ApiDefinitionEntity>> queryApis(String app, String ip, Integer port) {
+    public Result<List<ApiDefinitionEntity>> queryApis(String app) {
 
         if (StringUtil.isEmpty(app)) {
             return Result.ofFail(-1, "app can't be null or empty");
         }
-        if (StringUtil.isEmpty(ip)) {
-            return Result.ofFail(-1, "ip can't be null or empty");
-        }
-        if (port == null) {
-            return Result.ofFail(-1, "port can't be null");
-        }
 
         try {
-            List<ApiDefinitionEntity> apis = sentinelApiClient.fetchApis(app, ip, port).get();
+            List<ApiDefinitionEntity> apis = ruleProvider.getRules(app);
+            if (apis != null && !apis.isEmpty()) {
+                for (ApiDefinitionEntity entity : apis) {
+                    entity.setApp(app);
+                }
+            }
+
             repository.saveAll(apis);
             return Result.ofSuccess(apis);
         } catch (Throwable throwable) {
@@ -91,18 +96,6 @@ public class GatewayApiController {
 
         ApiDefinitionEntity entity = new ApiDefinitionEntity();
         entity.setApp(app.trim());
-
-        String ip = reqVo.getIp();
-        if (StringUtil.isBlank(ip)) {
-            return Result.ofFail(-1, "ip can't be null or empty");
-        }
-        entity.setIp(ip.trim());
-
-        Integer port = reqVo.getPort();
-        if (port == null) {
-            return Result.ofFail(-1, "port can't be null");
-        }
-        entity.setPort(port);
 
         // API名称
         String apiName = reqVo.getApiName();
@@ -140,7 +133,7 @@ public class GatewayApiController {
         entity.setPredicateItems(new LinkedHashSet<>(predicateItemEntities));
 
         // 检查API名称不能重复
-        List<ApiDefinitionEntity> allApis = repository.findAllByMachine(MachineInfo.of(app.trim(), ip.trim(), port));
+        List<ApiDefinitionEntity> allApis = repository.findAllByApp(app.trim());
         if (allApis.stream().map(o -> o.getApiName()).anyMatch(o -> o.equals(apiName.trim()))) {
             return Result.ofFail(-1, "apiName exists: " + apiName);
         }
@@ -156,8 +149,11 @@ public class GatewayApiController {
             return Result.ofThrowable(-1, throwable);
         }
 
-        if (!publishApis(app, ip, port)) {
+        try {
+            publishApis(app);
+        } catch (Throwable e) {
             logger.warn("publish gateway apis fail after add");
+            return Result.ofFail(-1, e.getMessage());
         }
 
         return Result.ofSuccess(entity);
@@ -219,8 +215,11 @@ public class GatewayApiController {
             return Result.ofThrowable(-1, throwable);
         }
 
-        if (!publishApis(app, entity.getIp(), entity.getPort())) {
+        try {
+            publishApis(app);
+        } catch (Throwable e) {
             logger.warn("publish gateway apis fail after update");
+            return Result.ofFail(-1, e.getMessage());
         }
 
         return Result.ofSuccess(entity);
@@ -245,15 +244,19 @@ public class GatewayApiController {
             return Result.ofThrowable(-1, throwable);
         }
 
-        if (!publishApis(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort())) {
+        try {
+            publishApis(oldEntity.getApp());
+        } catch (Throwable e) {
             logger.warn("publish gateway apis fail after delete");
+            return Result.ofFail(-1, e.getMessage());
         }
 
         return Result.ofSuccess(id);
     }
 
-    private boolean publishApis(String app, String ip, Integer port) {
-        List<ApiDefinitionEntity> apis = repository.findAllByMachine(MachineInfo.of(app, ip, port));
-        return sentinelApiClient.modifyApis(app, ip, port, apis);
+    private void publishApis(/*@NonNull*/ String app) throws Exception {
+        List<ApiDefinitionEntity> apis = repository.findAllByApp(app);
+        rulePublisher.publish(app, apis);
     }
+
 }

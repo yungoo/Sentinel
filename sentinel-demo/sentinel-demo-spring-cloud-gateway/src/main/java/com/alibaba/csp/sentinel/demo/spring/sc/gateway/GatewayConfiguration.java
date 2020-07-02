@@ -71,7 +71,7 @@ public class GatewayConfiguration {
         return new SentinelGatewayFilter();
     }
 
-    @PostConstruct
+//    @PostConstruct
     public void doInit() {
         initCustomizedApis();
         initGatewayRules();
